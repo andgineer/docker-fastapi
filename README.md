@@ -19,3 +19,11 @@ with FastAPI and MongoDB support.
 ```bash
 docker run -it --rm -v $PWD/example:/app:ro andgineer/fastapi app/ping.py
 ```
+
+## Run FastAPI server
+
+```bash
+docker run -it --rm -v $PWD/example:/app:ro andgineer/fastapi app/singularity.py
+```
+
+Voila! Your FastAPI server is up and running at http://localhost:8000/

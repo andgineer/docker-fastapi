@@ -12,3 +12,4 @@ mistune
 xmltodict
 fastapi
 click
+uvicorn
