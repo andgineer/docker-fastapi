@@ -17,13 +17,13 @@ with FastAPI and MongoDB support.
 ## Quick Start
 
 ```bash
-docker run -it --rm -v $PWD/example:/app:ro andgineer/fastapi app/ping.py
+docker run -it --rm -v $PWD/example:/app:ro andgineer/fastapi ping.py
 ```
 
 ## Run FastAPI server
 
 ```bash
-docker run -it --rm -v $PWD/example:/app:ro andgineer/fastapi app/singularity.py
+docker run -it --rm -v $PWD/example:/app:ro -p 8000:8000 andgineer/fastapi -m uvicorn singularity:app  --host 0.0.0.0
 ```
 
 Voila! Your FastAPI server is up and running at http://localhost:8000/
