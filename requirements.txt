@@ -17,3 +17,4 @@ uvicorn
 httpx
 pytest
 pre-commit
+mypy
