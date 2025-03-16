@@ -13,3 +13,6 @@ xmltodict
 fastapi
 click
 uvicorn
+
+httpx
+pytest
