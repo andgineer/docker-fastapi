@@ -6,7 +6,7 @@ from datetime import datetime
 import pymongo
 
 # Connect to MongoDB
-client = pymongo.MongoClient("mongodb://admin:password@localhost:27017/")
+client: pymongo.MongoClient = pymongo.MongoClient("mongodb://admin:password@localhost:27017/")
 db = client["fastapi_db"]
 
 # Create collections with indexes
