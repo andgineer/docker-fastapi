@@ -18,3 +18,5 @@ httpx
 pytest
 pre-commit
 mypy
+redis
+motor

@@ -16,6 +16,31 @@ test:
 ping:
 	docker run -it --rm -p 8000:8000 -v $$(PWD)/src:/app:ro fastapi-playground ping.py
 
+# Multi-service stack with docker-compose
+.HELP: stack-up  ## Start stack (FastAPI + MongoDB + Redis)
+stack-up:
+	docker-compose up -d
+
+.HELP: stack-down  ## Stop stack
+stack-down:
+	docker-compose down
+
+.HELP: stack-logs  ## Show logs from all services
+stack-logs:
+	docker-compose logs -f
+
+.HELP: stack-build  ## Build and start stack
+stack-build:
+	docker-compose up -d --build
+
+.HELP: stack-test  ## Run tests in stack environment
+stack-test:
+	docker-compose exec app pytest /tests
+
+.HELP: stack-init-db  ## Initialize database with sample data
+stack-init-db:
+	./deploy-stack/init-db.sh
+
 .HELP: help  ## Display this message
 help:
 	@grep -E \
