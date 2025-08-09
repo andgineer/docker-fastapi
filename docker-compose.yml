@@ -9,7 +9,7 @@ services:
       - ./src:/app:ro
       - ./tests:/tests:ro
     environment:
-      - MONGODB_URL=mongodb://mongo:27017/fastapi_db
+      - MONGODB_URL=mongodb://admin:password@mongo:27017/fastapi_db?authSource=admin
       - REDIS_URL=redis://redis:6379
       - ENVIRONMENT=development
     depends_on:

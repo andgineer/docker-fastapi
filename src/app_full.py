@@ -1,46 +1,63 @@
+import json
 import logging
 import os
 from contextlib import asynccontextmanager
-from typing import Any, Dict
+from typing import Any
 
 import redis.asyncio as redis
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo.errors import PyMongoError
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Global variables for database connections
-mongodb_client: AsyncIOMotorClient = None
-redis_client: redis.Redis = None
-database = None
+
+class DatabaseManager:
+    def __init__(self) -> None:
+        self.mongodb_client: AsyncIOMotorClient | None = None
+        self.redis_client: redis.Redis | None = None
+        self.database: Any = None
+
+    async def connect(self) -> None:
+        # MongoDB connection
+        mongodb_url = os.getenv("MONGODB_URL", "mongodb://localhost:27017/fastapi_db")
+        self.mongodb_client = AsyncIOMotorClient(mongodb_url)
+        self.database = self.mongodb_client.get_default_database()
+
+        # Redis connection
+        redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
+        self.redis_client = redis.from_url(redis_url, decode_responses=True)
+
+        logger.info("Connected to databases")
+
+    async def disconnect(self) -> None:
+        if self.mongodb_client:
+            self.mongodb_client.close()
+        if self.redis_client:
+            await self.redis_client.close()
+        logger.info("Disconnected from databases")
+
+
+db_manager = DatabaseManager()
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI):
     # Startup
-    global mongodb_client, redis_client, database
-
-    # MongoDB connection
-    mongodb_url = os.getenv("MONGODB_URL", "mongodb://localhost:27017/fastapi_db")
-    mongodb_client = AsyncIOMotorClient(mongodb_url)
-    database = mongodb_client.get_default_database()
-
-    # Redis connection
-    redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
-    redis_client = redis.from_url(redis_url, decode_responses=True)
-
-    logger.info("Connected to databases")
+    await db_manager.connect()
     yield
-
     # Shutdown
-    if mongodb_client:
-        mongodb_client.close()
-    if redis_client:
-        await redis_client.close()
-    logger.info("Disconnected from databases")
+    await db_manager.disconnect()
 
+
+def get_db_manager() -> DatabaseManager:
+    return db_manager
+
+
+# Module-level dependency to satisfy B008 linter warning
+db_dependency = Depends(get_db_manager)
 
 app = FastAPI(
     title=os.getenv("PROJECT_NAME", "FastAPI Playground"),
@@ -55,65 +72,78 @@ async def read_root():
 
 
 @app.get("/health")
-async def health_check():
+async def health_check(db: DatabaseManager = db_dependency):
     """Health check endpoint for monitoring"""
-    health_status = {"status": "healthy", "services": {}}
+    health_status: dict[str, Any] = {"status": "healthy", "services": {}}
 
     # Check MongoDB
-    try:
-        await mongodb_client.admin.command("ping")
-        health_status["services"]["mongodb"] = "healthy"
-    except Exception as e:
-        health_status["services"]["mongodb"] = f"unhealthy: {str(e)}"
+    if db.mongodb_client is None:
+        health_status["services"]["mongodb"] = "unhealthy: not connected"
         health_status["status"] = "degraded"
+    else:
+        try:
+            await db.mongodb_client.admin.command("ping")
+            health_status["services"]["mongodb"] = "healthy"
+        except PyMongoError as e:
+            health_status["services"]["mongodb"] = f"unhealthy: {str(e)}"
+            health_status["status"] = "degraded"
 
     # Check Redis
-    try:
-        await redis_client.ping()
-        health_status["services"]["redis"] = "healthy"
-    except Exception as e:
-        health_status["services"]["redis"] = f"unhealthy: {str(e)}"
+    if db.redis_client is None:
+        health_status["services"]["redis"] = "unhealthy: not connected"
         health_status["status"] = "degraded"
+    else:
+        try:
+            await db.redis_client.ping()
+            health_status["services"]["redis"] = "healthy"
+        except redis.RedisError as e:
+            health_status["services"]["redis"] = f"unhealthy: {str(e)}"
+            health_status["status"] = "degraded"
 
     return health_status
 
 
 @app.get("/users")
-async def get_users():
+async def get_users(db: DatabaseManager = db_dependency):
     """Get all users from MongoDB"""
+    if db.database is None:
+        raise HTTPException(status_code=503, detail="Database not connected")
+
     try:
-        users = await database.users.find().to_list(length=100)
+        users = await db.database.users.find().to_list(length=100)
         # Convert ObjectId to string for JSON serialization
         for user in users:
             user["_id"] = str(user["_id"])
         return {"users": users}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except PyMongoError as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.post("/cache/{key}")
-async def set_cache(key: str, value: Dict[str, Any]):
+async def set_cache(key: str, value: dict[str, Any], db: DatabaseManager = db_dependency):
     """Set a value in Redis cache"""
-    try:
-        import json
+    if db.redis_client is None:
+        raise HTTPException(status_code=503, detail="Redis not connected")
 
-        await redis_client.set(key, json.dumps(value), ex=3600)  # Expire in 1 hour
+    try:
+        await db.redis_client.set(key, json.dumps(value), ex=3600)  # Expire in 1 hour
         return {"message": f"Cached {key} successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except redis.RedisError as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.get("/cache/{key}")
-async def get_cache(key: str):
+async def get_cache(key: str, db: DatabaseManager = db_dependency):
     """Get a value from Redis cache"""
-    try:
-        import json
+    if db.redis_client is None:
+        raise HTTPException(status_code=503, detail="Redis not connected")
 
-        value = await redis_client.get(key)
+    try:
+        value = await db.redis_client.get(key)
         if value is None:
             raise HTTPException(status_code=404, detail="Key not found")
         return {"key": key, "value": json.loads(value)}
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=500, detail="Invalid JSON in cache")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=500, detail="Invalid JSON in cache") from e
+    except redis.RedisError as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e

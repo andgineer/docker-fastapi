@@ -69,3 +69,26 @@ For a full-featured development environment with MongoDB, Redis, and Nginx:
 ### Configuration
 
 Copy `env.example` to `.env` and customize environment variables as needed.
+
+### Database Access
+
+**Default MongoDB credentials:**
+- Username: `admin`
+- Password: `password`
+- Database: `fastapi_db`
+- Connection URL: `mongodb://admin:password@localhost:27017/fastapi_db?authSource=admin`
+
+**Direct MongoDB access:**
+```bash
+# Connect to MongoDB shell
+docker-compose exec mongo mongosh -u admin -p password --authenticationDatabase admin
+
+# Or with connection string
+docker-compose exec mongo mongosh "mongodb://admin:password@localhost:27017/fastapi_db?authSource=admin"
+```
+
+**Redis access:**
+```bash
+# Connect to Redis CLI
+docker-compose exec redis redis-cli
+```
