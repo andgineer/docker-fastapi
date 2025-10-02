@@ -1,6 +1,6 @@
 [![Build Status](https://github.com/andgineer/docker-fastapi/workflows/CI/badge.svg)](https://github.com/andgineer/docker-fastapi/actions)
 
-# FastAPI Docker-based Playground
+# Lightweight FastAPI Playground with Docker, MongoDB, and Redis on Alpine Linux
 
 - Lightweight Alpine-based container with FastAPI for high-performance API development
 - MongoDB integration
@@ -11,7 +11,7 @@
 
 ## Build
 
-Place all necessary requirements in `requirements.txt` file.
+Place all necessary requirements in the `requirements.txt` file.
 
     make build
 
@@ -21,8 +21,8 @@ What will run is set in `Dockerfile`'s `CMD` command
 
     make run
 
-Voila! Your FastAPI server is up and running at http://localhost:8000/
-And Swagger UI is available at http://localhost:8000/docs
+Voilà! Your FastAPI server is up and running at http://localhost:8000/
+Swagger UI is available at http://localhost:8000/docs
 
 ## Run ping example (health check)
 
@@ -46,8 +46,8 @@ For a full-featured development environment with MongoDB, Redis, and Nginx:
 
 3. Access the application:
    - FastAPI: http://localhost:8000/
-   - API Documentation: http://localhost:8000/docs
-   - Health Check: http://localhost:8000/health
+   - API documentation: http://localhost:8000/docs
+   - Health check: http://localhost:8000/health
    - Sample endpoints: http://localhost:8000/users, http://localhost:8000/cache/test
 
 ### Stack Commands
@@ -61,7 +61,7 @@ For a full-featured development environment with MongoDB, Redis, and Nginx:
 
 ### Services
 
-- **FastAPI App** - Main application with database connectivity (`src/app_full.py`)
+- **FastAPI app** - Main application with database connectivity (`src/app_full.py`)
 - **MongoDB** - Document database on port 27017
 - **Redis** - Cache and session storage on port 6379
 - **Nginx** - Reverse proxy (production mode: `docker-compose --profile production up`)
