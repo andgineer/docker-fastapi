@@ -82,8 +82,9 @@ async def health_check(db: DatabaseManager = db_dependency):
         health_status["status"] = "degraded"
     else:
         try:
-            await db.mongodb_client.admin.command("ping")
+            response = await db.mongodb_client.admin.command("ping")
             health_status["services"]["mongodb"] = "healthy"
+            logger.info(f"MongoDB Ping: {response}")
         except PyMongoError as e:
             health_status["services"]["mongodb"] = f"unhealthy: {str(e)}"
             health_status["status"] = "degraded"
@@ -94,8 +95,12 @@ async def health_check(db: DatabaseManager = db_dependency):
         health_status["status"] = "degraded"
     else:
         try:
-            await db.redis_client.ping()
-            health_status["services"]["redis"] = "healthy"
+            response = await db.redis_client.ping()  # type: ignore[not-async]
+            if not response:
+                health_status["services"]["redis"] = "unhealthy: not connected"
+            else:
+                health_status["services"]["redis"] = "healthy"
+            logger.info(f"Redis Ping: {response}")
         except redis.RedisError as e:
             health_status["services"]["redis"] = f"unhealthy: {str(e)}"
             health_status["status"] = "degraded"

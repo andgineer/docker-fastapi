@@ -9,6 +9,9 @@
 - Alpine Linux base for minimal image size
 - Nothing installed locally, everything is in the container
 
+`/src` is mounted inside the containers so you just edit sources and they
+are immediately updated in the running server
+
 ## Build
 
 Place all necessary requirements in the `requirements.txt` file.

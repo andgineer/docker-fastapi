@@ -2,7 +2,7 @@ services:
   # FastAPI application
   app:
     build: .
-    command: ["-m", "uvicorn", "app_full:app", "--host", "0.0.0.0"]
+    command: ["-m", "uvicorn", "app_full:app", "--host", "0.0.0.0", "--reload"]
     ports:
       - "8000:8000"
     volumes:

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """MongoDB initialization script for FastAPI playground"""
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pymongo
 
@@ -23,7 +23,7 @@ items_collection.create_index("created_at")
 sample_user = {
     "email": "user@example.com",
     "name": "Sample User",
-    "created_at": datetime.utcnow(),
+    "created_at": datetime.now(tz=timezone.utc),
 }
 users_collection.insert_one(sample_user)
 
@@ -31,7 +31,7 @@ sample_item = {
     "name": "Sample Item",
     "description": "This is a sample item",
     "owner_id": "user@example.com",
-    "created_at": datetime.utcnow(),
+    "created_at": datetime.now(tz=timezone.utc),
 }
 items_collection.insert_one(sample_item)
 
