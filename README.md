@@ -1,8 +1,8 @@
 [![Build Status](https://github.com/andgineer/docker-fastapi/workflows/CI/badge.svg)](https://github.com/andgineer/docker-fastapi/actions)
 
-# Lightweight FastAPI Playground with Docker, MongoDB, and Redis on Alpine Linux
+# Lightweight FastAPI docker-compose Playground with MongoDB, and Redis on Alpine Linux
 
-- Lightweight Alpine-based container with FastAPI for high-performance API development
+- Lightweight Alpine-based docker compose setup for high-performance FastAPI development
 - MongoDB integration
 - OpenSSL for secure communications
 - [uv](https://github.com/astral-sh/uv) package manager for optimized dependency management
